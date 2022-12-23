@@ -19,10 +19,12 @@ enum Color {
 public class Card {
     private Type type;
     private Color color;
+    private int number;
 
-    public Card(){
-        type = Type.NUMBER;
-        color = Color.ALL;
+    public Card(Type type, Color color, int number){
+        this.number = number;
+        this.type = type;
+        this.color = color;
     }
 
     public Type getType(){
@@ -39,15 +41,6 @@ public class Card {
 
     public void setColor(Color color){
         this.color = color;
-    }
-}
-
-class NumberdCard extends Card {
-    private int number;
-
-    public NumberdCard(){
-        super();
-        number = 0;
     }
 
     public int getNumber(){
