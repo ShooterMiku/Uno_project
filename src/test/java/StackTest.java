@@ -1,21 +1,21 @@
+import Server.Card;
+import Server.Stack;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import javax.annotation.processing.Generated;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class StackTest {
 
     @Test
-    @DisplayName("Generating New Stack")
+    @DisplayName("Generating New Server.Stack")
     void isStackEmpty() {
         Stack stack = new Stack();
         assertFalse(stack.isStackEmpty());
     }
 
     @Test
-    @DisplayName("Card turn out")
+    @DisplayName("Server.Card turn out")
     void getCard() {
         Stack stack = new Stack();
         Card card = stack.getCard();

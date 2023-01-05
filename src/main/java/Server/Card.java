@@ -1,3 +1,5 @@
+package Server;
+
 enum Type {
     NUMBER,
     CHANGER,
