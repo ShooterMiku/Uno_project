@@ -1,4 +1,4 @@
-package Server;
+package server;
 
 enum Type {
     NUMBER,

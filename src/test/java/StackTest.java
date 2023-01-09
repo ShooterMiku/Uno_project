@@ -1,5 +1,5 @@
-import Server.Card;
-import Server.Stack;
+import server.Card;
+import server.Stack;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
