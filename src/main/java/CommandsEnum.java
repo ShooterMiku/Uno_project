@@ -1,5 +1,3 @@
-package server;
-
 public enum CommandsEnum {
     HELLO("HELLO"),
     WELCOME("WELCOME"),

@@ -1,5 +1,3 @@
-package server;
-
 public enum BroadcastsEnum {
     START("START"),
     UPDATE("UPDATE"),
