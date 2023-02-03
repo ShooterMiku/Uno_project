@@ -1,370 +1,122 @@
 package src.server;
-import static org.junit.Assert.assertEquals;
-import org.junit.Test;
-import org.apache.log4j.Logger;
-import static org.junit.jupiter.api.Assertions.fail;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
+
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-public class TGameProcessTest {
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-    private Logger log = Logger.getLogger(this.getClass());
-    @BeforeAll
-    static void initAll() {
-    }
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+
+import static org.mockito.Mockito.*;
+
+class TGameProcessTest {
+    @Mock
+    HashMap<String, MyGameClient> clients;
+    @Mock
+    Stack stack;
+    @Mock
+    HashMap<String, Collection<Card>> playerStacks;
+    @Mock
+    ArrayList<Card> placedCards;
+    @Mock
+    ArrayList<String> rotaryTable;
+    @Mock
+    HashMap<String, Integer> playerScore;
+    @InjectMocks
+    TGameProcess tGameProcess;
+
     @BeforeEach
-    void init() {
+    void setUp() {
+        MockitoAnnotations.initMocks(this);
     }
 
     @Test
-    @DisplayName("is Gaming")
-    public void isGaming(){
-        try {
-            log.info("Starting execution of isGaming");
-            boolean expectedValue=false;
-            GameClient client = null;
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            boolean actualValue=tgameprocess.isGaming( client);
-            log.info("Expected Value="+ expectedValue +" . Actual Value="+actualValue);
-            System.out.println("Expected Value="+ expectedValue +" . Actual Value="+actualValue);
-            Assertions.assertEquals(expectedValue, actualValue);
-        } catch (Exception exception) {
-            log.error("Exception in execution of execute1GetAllLogFromFirstMovF-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+    void testIsGaming() {
+        boolean result = tGameProcess.isGaming(new MyGameClient("clientId", null));
+        Assertions.assertEquals(true, result);
     }
 
     @Test
-    @DisplayName("update Card")
-    public void updateCard(){
-        try {
-            log.info("Starting execution of updateCard");
-            GameClient client = null;
-            String action="";
-            Card card = null;
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            tgameprocess.updateCard( client ,action ,card);
-            Assertions.assertTrue(true);
-        } catch (Exception exception) {
-            log.error("Exception in execution ofupdateCard-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+    void testAddPlayers() {
+        tGameProcess.addPlayers(new MyGameClient("clientId", null));
     }
 
     @Test
-    @DisplayName("game Over")
-    public void gameOver(){
-        try {
-            log.info("Starting execution of gameOver");
-            GameClient winner = null;
+    void testOnMessage() {
+        when(stack.getCard()).thenReturn(new Card(Type.NUMBER, Color.RED, 0));
 
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            tgameprocess.gameOver( winner);
-            Assertions.assertTrue(true);
-        } catch (Exception exception) {
-            log.error("Exception in execution ofgameOver-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+        tGameProcess.onMessage(new MyGameClient("clientId", null), "message");
     }
 
     @Test
-    @DisplayName("start Game Process")
-    public void startGameProcess(){
-        try {
-            log.info("Starting execution of startGameProcess");
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            tgameprocess.startGameProcess();
-            Assertions.assertTrue(true);
-        } catch (Exception exception) {
-            log.error("Exception in execution ofstartGameProcess-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+    void testMoveValid() {
+        boolean result = tGameProcess.moveValid(new Card(Type.NUMBER, Color.RED, 0));
+        Assertions.assertEquals(true, result);
     }
 
     @Test
-    @DisplayName("notify Players Operating")
-    public void notifyPlayersOperating(){
-        try {
-            log.info("Starting execution of notifyPlayersOperating");
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            tgameprocess.notifyPlayersOperating();
-            Assertions.assertTrue(true);
-        } catch (Exception exception) {
-            log.error("Exception in execution ofnotifyPlayersOperating-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+    void testChangeCards() {
+        tGameProcess.changeCards(new MyGameClient("clientId", null), "targetPlayerName");
     }
 
     @Test
-    @DisplayName("gen Player Current Cards")
-    public void genPlayerCurrentCards(){
-        try {
-            log.info("Starting execution of genPlayerCurrentCards");
-            String expectedValue="";
-            GameClient client = null;
-            int cardNum=0;
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            String actualValue=tgameprocess.genPlayerCurrentCards( client ,cardNum);
-            log.info("Expected Value="+ expectedValue +" . Actual Value="+actualValue);
-            System.out.println("Expected Value="+ expectedValue +" . Actual Value="+actualValue);
-            Assertions.assertEquals(expectedValue, actualValue);
-        } catch (Exception exception) {
-            log.error("Exception in execution of execute1GetAllLogFromFirstMovF-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+    void testSendChatMessage() {
+        tGameProcess.sendChatMessage(new MyGameClient("clientId", null), "msg");
     }
 
     @Test
-    @DisplayName("player Score Plus")
-    public void playerScorePlus(){
-        try {
-            log.info("Starting execution of playerScorePlus");
-            GameClient player = null;
-            int score=0;
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            tgameprocess.playerScorePlus( player ,score);
-            Assertions.assertTrue(true);
-        } catch (Exception exception) {
-            log.error("Exception in execution ofplayerScorePlus-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+    void testHandCard() {
+        tGameProcess.handCard(new MyGameClient("clientId", null));
     }
 
     @Test
-    @DisplayName("get State")
-    public void getState(){
-        try {
-            log.info("Starting execution of getState");
-            int expectedValue=0;
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            int actualValue=tgameprocess.getState();
-            log.info("Expected Value="+ expectedValue +" . Actual Value="+actualValue);
-            System.out.println("Expected Value="+ expectedValue +" . Actual Value="+actualValue);
-            Assertions.assertEquals(expectedValue, actualValue);
-        } catch (Exception exception) {
-            log.error("Exception in execution of execute1GetAllLogFromFirstMovF-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+    void testErrorMsg() {
+        tGameProcess.errorMsg(new MyGameClient("clientId", null), ErrorCodeEnum.E1);
     }
 
     @Test
-    @DisplayName("get Player Num")
-    public void getPlayerNum(){
-        try {
-            log.info("Starting execution of getPlayerNum");
-            int expectedValue=0;
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            int actualValue=tgameprocess.getPlayerNum();
-            log.info("Expected Value="+ expectedValue +" . Actual Value="+actualValue);
-            System.out.println("Expected Value="+ expectedValue +" . Actual Value="+actualValue);
-            Assertions.assertEquals(expectedValue, actualValue);
-        } catch (Exception exception) {
-            log.error("Exception in execution of execute1GetAllLogFromFirstMovF-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+    void testMoveCard() {
+        tGameProcess.moveCard(new MyGameClient("clientId", null), "action");
     }
 
     @Test
-    @DisplayName("add Players")
-    public void addPlayers(){
-        try {
-            log.info("Starting execution of addPlayers");
-            GameClient client = null;
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            tgameprocess.addPlayers( client);
-            Assertions.assertTrue(true);
-        } catch (Exception exception) {
-            log.error("Exception in execution ofaddPlayers-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+    void testUpdateCard() {
+        tGameProcess.updateCard(new MyGameClient("clientId", null), "action", new Card(Type.NUMBER, Color.RED, 0));
     }
 
     @Test
-    @DisplayName("on Message")
-    public void onMessage(){
-        try {
-            log.info("Starting execution of onMessage");
-            GameClient client = null;
-            String message="";
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            tgameprocess.onMessage( client ,message);
-            Assertions.assertTrue(true);
-        } catch (Exception exception) {
-            log.error("Exception in execution ofonMessage-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+    void testGameOver() {
+        tGameProcess.gameOver(new MyGameClient("clientId", null));
     }
 
     @Test
-    @DisplayName("move Valid")
-    public void moveValid(){
-        try {
-            log.info("Starting execution of moveValid");
-            boolean expectedValue=false;
-            Card nowCard = null;
+    void testStartGameProcess() {
+        when(stack.getCard()).thenReturn(new Card(Type.NUMBER, Color.RED, 0));
 
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            boolean actualValue=tgameprocess.moveValid( nowCard);
-            log.info("Expected Value="+ expectedValue +" . Actual Value="+actualValue);
-            System.out.println("Expected Value="+ expectedValue +" . Actual Value="+actualValue);
-            Assertions.assertEquals(expectedValue, actualValue);
-        } catch (Exception exception) {
-            log.error("Exception in execution of execute1GetAllLogFromFirstMovF-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+        tGameProcess.startGameProcess();
     }
 
     @Test
-    @DisplayName("change Cards")
-    public void changeCards(){
-        try {
-            log.info("Starting execution of changeCards");
-            GameClient client = null;
-            String targetPlayerName="";
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            tgameprocess.changeCards( client ,targetPlayerName);
-            Assertions.assertTrue(true);
-        } catch (Exception exception) {
-            log.error("Exception in execution ofchangeCards-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+    void testNotifyPlayersOperating() {
+        tGameProcess.notifyPlayersOperating();
     }
 
     @Test
-    @DisplayName("send Chat Message")
-    public void sendChatMessage(){
-        try {
-            log.info("Starting execution of sendChatMessage");
-            GameClient client = null;
-            String msg="";
+    void testGenPlayerCurrentCards() {
+        when(stack.getCard()).thenReturn(new Card(Type.NUMBER, Color.RED, 0));
 
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            tgameprocess.sendChatMessage( client ,msg);
-            Assertions.assertTrue(true);
-        } catch (Exception exception) {
-            log.error("Exception in execution ofsendChatMessage-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
+        String result = tGameProcess.genPlayerCurrentCards(new MyGameClient("clientId", null), 0);
+        Assertions.assertEquals("replaceMeWithExpectedResult", result);
     }
 
     @Test
-    @DisplayName("hand Card")
-    public void handCard(){
-        try {
-            log.info("Starting execution of handCard");
-            GameClient client = null;
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            tgameprocess.handCard( client);
-            Assertions.assertTrue(true);
-        } catch (Exception exception) {
-            log.error("Exception in execution ofhandCard-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
-    }
-
-    @Test
-    @DisplayName("error Msg")
-    public void errorMsg(){
-        try {
-            log.info("Starting execution of errorMsg");
-            GameClient client = null;
-            ErrorCodeEnum error = null;
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            tgameprocess.errorMsg( client ,error);
-            Assertions.assertTrue(true);
-        } catch (Exception exception) {
-            log.error("Exception in execution oferrorMsg-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
-    }
-
-    @Test
-    @DisplayName("move Card")
-    public void moveCard(){
-        try {
-            log.info("Starting execution of moveCard");
-            GameClient client = null;
-            String action="";
-
-            int numc=0;
-
-            TGameProcess tgameprocess  =new TGameProcess( numc);
-            tgameprocess.moveCard( client ,action);
-            Assertions.assertTrue(true);
-        } catch (Exception exception) {
-            log.error("Exception in execution ofmoveCard-"+exception,exception);
-            exception.printStackTrace();
-            Assertions.assertFalse(false);
-        }
-    }
-    @AfterEach
-    void tearDown() {
-    }
-    @AfterAll
-    static void tearDownAll() {
+    void testPlayerScorePlus() {
+        tGameProcess.playerScorePlus(new MyGameClient("clientId", null), 0);
     }
 }
+
+//Generated with love by TestMe :) Please report issues and submit feature requests at: http://weirddev.com/forum#!/testme

@@ -134,7 +134,7 @@ public class TGameProcess implements GameProcess {
     /**
      * Move card
      *
-     * @param card is a card from player
+     * @param nowCard is a card from player
      */
     public boolean moveValid(Card nowCard) {
         if (placedCards.size()<1) {
