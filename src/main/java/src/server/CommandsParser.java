@@ -16,7 +16,7 @@ public class CommandsParser {
     }
 
     /**
-     * String nmuber
+     * get String
      *
      * @return int
      */
@@ -30,7 +30,7 @@ public class CommandsParser {
     /**
      * effect order
      *
-     * @param message 
+     * @param message
      * @return boolean
      */
     public static boolean isValidCommand(String message){
@@ -40,6 +40,12 @@ public class CommandsParser {
         return message.endsWith(END);
     }
 
+    /**
+     * generator
+     *
+     * @param strings
+     * @return {@link String}
+     */
     public static String merge(String ...strings) {
         StringBuilder stringBuffer = new StringBuilder();
         for (int i = 0; i < strings.length; i++) {
