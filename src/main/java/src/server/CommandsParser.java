@@ -12,11 +12,16 @@ public class CommandsParser {
             return null;
         }
         String s = splitCommand(message)[0];
-        return CommandsEnum.valueOf(s);
+        CommandsEnum commandsEnum=null;
+        try {
+            commandsEnum = CommandsEnum.valueOf(s);
+        }catch (Exception ignore){
+        }
+        return commandsEnum;
     }
 
     /**
-     * get String
+     * 得到消息中字符串数量
      *
      * @return int
      */
@@ -28,9 +33,9 @@ public class CommandsParser {
     }
 
     /**
-     * effect order
+     * 是有效命令
      *
-     * @param message
+     * @param message 消息
      * @return boolean
      */
     public static boolean isValidCommand(String message){
@@ -41,9 +46,9 @@ public class CommandsParser {
     }
 
     /**
-     * generator
+     * 合并生成命令
      *
-     * @param strings
+     * @param strings 字符串
      * @return {@link String}
      */
     public static String merge(String ...strings) {

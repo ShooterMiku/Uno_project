@@ -2,6 +2,7 @@ package src.server;
 
 
 import src.CommandsEnum;
+import src.client.AiPlayer;
 import src.server.interfaces.GameClient;
 import src.server.interfaces.GameProcess;
 
@@ -25,13 +26,21 @@ public class MyGameServer extends AbstractGameServer {
 
     @Override
     public void onMessage(GameClient client, String message) {
+
+        CommandsEnum command = CommandsParser.getCommand(message);
+        //未知命令
+        if(command==null){
+            client.send(CommandsParser.merge(CommandsEnum.ERROR.getCommand(),ErrorCodeEnum.E4.getTag()));
+            return;
+        }
+
         for (GameProcess gameProcess : gameProcessList) {
             if (gameProcess.isGaming(client)) {
                 gameProcess.onMessage(client,message);
                 return;
             }
         }
-        CommandsEnum command = CommandsParser.getCommand(message);
+
         //Command to enter the server
         switch (command) {
             case HELLO:{
@@ -43,9 +52,18 @@ public class MyGameServer extends AbstractGameServer {
                 String numStr = CommandsParser.splitCommand(message)[1];
                 int num = Integer.parseInt(numStr);
                 //人数是否合理
-                // TODO: 2023/2/3 判断人数是否合理
+                if(num>10||num<1){
+                    client.send(CommandsParser.merge(CommandsEnum.ERROR.getCommand(),ErrorCodeEnum.E1.getTag()) );
+                    return;
+                }
+                //加入AI
+                if(num==1){
+                    new Thread(new AiPlayer()).start();
+                }
+
                 GameProcess join = getJoin(num);
                 join.addPlayers(client);
+
 
                 System.out.println("开启多人游戏队列");
                 join.onMessage(client,message);
@@ -57,6 +75,7 @@ public class MyGameServer extends AbstractGameServer {
         }
 
         System.out.println("[Server]: client " + client.getClientId() + " messaged: " + message);
+        client.send(CommandsParser.merge(CommandsEnum.ERROR.getCommand(),ErrorCodeEnum.E2.getTag()));
 //        client.send(message);
     }
     public GameProcess getJoin(int num){
@@ -72,6 +91,7 @@ public class MyGameServer extends AbstractGameServer {
         if(gameProcess==null){
             gameProcess = new TGameProcess(num);
             gameProcessList.add(gameProcess);
+
         }
         return gameProcess;
     }

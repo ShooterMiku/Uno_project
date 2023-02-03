@@ -72,6 +72,7 @@ public class MyGameClient implements GameClient {
                 socketServerEvent.onMessage(this, line);
             }
         } catch(Exception ex) {
+            send("ERROR&" + ex.getMessage()+ "|");
             socketServerEvent.onError(this, "Error while reading data from the socket");
         } finally {
             close("Socket disconnected on purpose");

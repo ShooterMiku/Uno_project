@@ -1,5 +1,6 @@
 package src.server;
 
+import src.BroadcastsEnum;
 import src.CommandsEnum;
 import src.server.interfaces.GameClient;
 import src.server.interfaces.GameProcess;
@@ -7,9 +8,7 @@ import src.server.interfaces.GameProcess;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class TGameProcess implements GameProcess {
 
@@ -18,16 +17,19 @@ public class TGameProcess implements GameProcess {
 
     private Stack stack;
 
-    private HashMap<String,Collection<Card>> playerStacks = new HashMap<>();
-    private ArrayList<String> rotaryTable =new ArrayList<>();
+    private HashMap<String, Collection<Card>> playerStacks = new HashMap<>();
 
-    private HashMap<String,Integer> playerScore = new HashMap<>();
+    private ArrayList<Card> placedCards = new ArrayList<>();
+    private ArrayList<String> rotaryTable = new ArrayList<>();
 
-    public TGameProcess(int num){
+    private HashMap<String, Integer> playerScore = new HashMap<>();
+
+    public TGameProcess(int num) {
         this.state = 0;
         this.num = num;
         stack = new Stack();
     }
+
     /**
      * 状态：  0 队列 1 开始 2 结束
      */
@@ -41,23 +43,24 @@ public class TGameProcess implements GameProcess {
 
     @Override
     public boolean isGaming(GameClient client) {
-        return state==1;
+        return clients.values().contains(client) && state == 1;
     }
 
     @Override
     public void addPlayers(GameClient client) {
         clients.put(client.getClientId(), (MyGameClient) client);
-        playerStacks.put(client.getClientId(),new ArrayList<>());
-        playerScore.put(client.getClientId(),0);
+        playerStacks.put(client.getClientId(), new ArrayList<>());
+        playerScore.put(client.getClientId(), 0);
 
     }
 
     @Override
-    public void onMessage(GameClient client, String message) {
+    public synchronized void onMessage(GameClient client, String message) {
 
         CommandsEnum command = CommandsParser.getCommand(message);
-        if (command==null) {
-            // TODO: 2023/2/3 无法识别命令
+        if (command == null) {
+            //  无法识别命令
+            errorMsg(client, ErrorCodeEnum.E3);
             return;
         }
         switch (command) {
@@ -71,32 +74,59 @@ public class TGameProcess implements GameProcess {
 
                 return;
                 //操作
-            } case MOVE:{
+            }
+            case MOVE: {
                 String action = CommandsParser.splitCommand(message)[1];
+                //当前发言用户
+                String curPlayer = rotaryTable.get(currentPosition);
+                //轮不到你
+                if (!curPlayer.equals(client.getClientId())) {
+                    errorMsg(client, ErrorCodeEnum.E3);
+                    return;
+                }
                 //玩家选择抽牌的话
                 if (action.equals("DRAW")) {
                     //给玩家发牌
-                    String curCards = genPlayerCurrentCards(client,1);
-                    client.send(CommandsParser.merge(CommandsEnum.HAND.getCommand(),curCards));
-                }else {//玩家出牌
-                    moveCard(client,action);
+                    String curCards = genPlayerCurrentCards(client, 1);
+                    client.send(CommandsParser.merge(CommandsEnum.HAND.getCommand(), curCards));
+                } else {//玩家出牌
+                    moveCard(client, action);
+                    String collect = playerStacks.get(client.getClientId()).stream().map(Card::getCarStr).collect(Collectors.joining(","));
+                    client.send(CommandsParser.merge(CommandsEnum.HAND.getCommand(), collect));
                 }
+                notifyPlayersOperating();
                 return;
-                //发送消息
-            } case CHAT:{
+            }
+            //发送消息
+            case CHAT: {
                 String msg = CommandsParser.splitCommand(message)[1];
-                sendChatMessage(client,msg);
+                sendChatMessage(client, msg);
                 return;
-            }case TAKE:{
+            }
+            case TAKE: {
                 //没用到
                 return;
-            }case CHANGE:{
+            }
+            case CHANGE: {
                 String targetPlayerName = CommandsParser.splitCommand(message)[1];
-                changeCards(client,targetPlayerName);
+                changeCards(client, targetPlayerName);
                 return;
             }
             default:
         }
+    }
+
+    public boolean moveValid(Card nowCard) {
+        if (placedCards.size()<1) {
+            return true;
+        }
+        Card oldCard = placedCards.get(placedCards.size());
+        if (oldCard.getColor() == nowCard.getColor()
+                || (oldCard.getType() == Type.NUMBER &&
+                oldCard.getNumber() == nowCard.getNumber())) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -121,28 +151,29 @@ public class TGameProcess implements GameProcess {
      * @param client 客户端
      * @param msg    消息
      */
-    public void sendChatMessage(GameClient client,String msg){
+    public void sendChatMessage(GameClient client, String msg) {
         for (MyGameClient player : clients.values()) {
             //不发给自己
-            if (player!=client) {
-                player.send(CommandsParser.merge("FROM",client.getClientId(),msg));
+            if (player != client) {
+                player.send(CommandsParser.merge("FROM", client.getClientId(), msg));
             }
         }
     }
-    public void handCard(GameClient client){
+
+    public void handCard(GameClient client) {
 
         String collect = playerStacks.get(client.getClientId()).stream().map(Card::getCarStr).collect(Collectors.joining(","));
-        client.send(CommandsParser.merge(CommandsEnum.HAND.getCommand(),collect));
+        client.send(CommandsParser.merge(CommandsEnum.HAND.getCommand(), collect));
     }
 
-    public void errorMsg(GameClient client,ErrorCodeEnum error){
-        client.send(CommandsParser.merge(CommandsEnum.ERROR.getCommand(),error.getTag()));
+    public void errorMsg(GameClient client, ErrorCodeEnum error) {
+        client.send(CommandsParser.merge(CommandsEnum.ERROR.getCommand(), error.getTag()));
     }
 
     /**
      * 出牌
      */
-    public void moveCard(GameClient client,String action){
+    public void moveCard(GameClient client, String action) {
         Collection<Card> cards = playerStacks.get(client.getClientId());
         Card card = null;
 
@@ -150,28 +181,46 @@ public class TGameProcess implements GameProcess {
             //识别的奥当前牌的信息
             if (item.getCarStr().equals(action)) {
                 card = item;
-
-                //减少玩家的牌
-                cards.remove(card);
-                //加玩家的分
-                playerScorePlus(client,1);
-
                 break;
             }
         }
-        // TODO: 2023/2/4  没有牌这张牌的异常
-        if(card==null){
-
+        //  没有牌这张牌的异常
+        if (card == null) {
+            errorMsg(client, ErrorCodeEnum.E1);
+            return;
         }
+        // 有效
+        if(!moveValid(card)){
+            errorMsg(client, ErrorCodeEnum.E2);
+            return;
+        }
+        //放置
+        placedCards.add(new Card(card.getType(), card.getColor(), card.getNumber()));
+        //告诉大家
+        updateCard(client, action, card);
+        //减少玩家的牌
+        cards.remove(card);
+        //加玩家的分
+        playerScorePlus(client, 1);
 
 
         //牌出完了宣布胜利
-        if (cards.size()==0) {
+        if (cards.size() == 0) {
             gameOver(client);
         }
 
     }
-    public void gameOver(GameClient winner){
+
+    public void updateCard(GameClient client, String action, Card card) {
+        for (GameClient player : clients.values()) {
+            //不发给自己
+            if (player != client) {
+                player.send(CommandsParser.merge(BroadcastsEnum.UPDATE.getTag(), client.getClientId(), action));
+            }
+        }
+    }
+
+    public void gameOver(GameClient winner) {
         state = 2;
 
         String players = String.join(",", playerScore.keySet());
@@ -179,7 +228,7 @@ public class TGameProcess implements GameProcess {
         for (MyGameClient client : clients.values()) {
             String collect = playerScore.values().stream().map(String::valueOf).collect(Collectors.joining(","));
             //
-            client.send(CommandsParser.merge("WIN",players,collect));
+            client.send(CommandsParser.merge("WIN", players, collect));
             // TODO: 2023/2/3 后续
 //            client.send(CommandsParser.merge("END",players,curCards));
         }
@@ -188,10 +237,11 @@ public class TGameProcess implements GameProcess {
     /**
      * 开始游戏线程
      */
-    public void startGameProcess(){
+    public void startGameProcess() {
         //开启转盘
         rotaryTable.addAll(clients.keySet());
         currentPosition = 0;
+        state = 1;
 
         String players = String.join(",", clients.keySet());
 
@@ -199,25 +249,29 @@ public class TGameProcess implements GameProcess {
         //给当前游戏玩家发送消息
         for (MyGameClient client : clients.values()) {
             //每个玩家发五张牌
-            String curCards = genPlayerCurrentCards(client,5);
+            String curCards = genPlayerCurrentCards(client, 5);
             //
-            client.send(CommandsParser.merge("START",players,curCards));
+            client.send(CommandsParser.merge("START", players, curCards));
         }
 
     }
-    public void notifyPlayersOperating(){
+
+    /**
+     * next 操作
+     */
+    public void notifyPlayersOperating() {
         // 告诉玩家开始出牌
         GameClient client = clients.get(rotaryTable.get(currentPosition));
-        client.send("");
+//        client.send("");
         if (clockwise) {
             currentPosition++;
-            if(currentPosition==rotaryTable.size()){
+            if (currentPosition == rotaryTable.size()) {
                 currentPosition = 0;
             }
-        }else {
+        } else {
             currentPosition--;
-            if(currentPosition<0){
-                currentPosition = rotaryTable.size()-1;
+            if (currentPosition < 0) {
+                currentPosition = rotaryTable.size() - 1;
             }
         }
     }
@@ -228,9 +282,9 @@ public class TGameProcess implements GameProcess {
      * @param client 客户端
      * @return {@link String}
      */
-    public String genPlayerCurrentCards(GameClient client,int cardNum){
+    public String genPlayerCurrentCards(GameClient client, int cardNum) {
         Collection<Card> cards = playerStacks.get(client.getClientId());
-        while (cardNum--!=0){
+        while (cardNum-- != 0) {
             Card card = stack.getCard();
             cards.add(card);
         }
@@ -246,11 +300,12 @@ public class TGameProcess implements GameProcess {
      * @param player 球员
      * @param score  分数
      */
-    public void playerScorePlus(GameClient player,int score){
+    public void playerScorePlus(GameClient player, int score) {
         String clientId = player.getClientId();
         Integer integer = playerScore.get(clientId);
-        playerScore.put(clientId,integer+score);
+        playerScore.put(clientId, integer + score);
     }
+
     @Override
     public int getState() {
         return state;
